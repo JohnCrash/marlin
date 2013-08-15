@@ -41,6 +41,7 @@
 // 82 = Brainwave (AT90USB646)
 // 9  = Gen3+
 // 70 = Megatronics
+// 72 = Megatron
 // 90 = Alpha OMCA board
 // 91 = Final OMCA board
 // 301 = Rambo
