@@ -76,6 +76,10 @@ void Config_StoreSettings()
     EEPROM_WRITE_VAR(i,0);
     EEPROM_WRITE_VAR(i,0);
   #endif
+	#ifdef DELTA_PRINTER
+		EEPROM_WRITE_VAR(i,delta_axis_offset);
+		EEPROM_WRITE_VAR(i,delta_diagonal_rod);
+	#endif
   char ver2[4]=EEPROM_VERSION;
   i=EEPROM_OFFSET;
   EEPROM_WRITE_VAR(i,ver2); // validate data
@@ -148,6 +152,17 @@ void Config_PrintSettings()
     SERIAL_ECHOPAIR(" D" ,Kd*PID_dT);
     SERIAL_ECHOLN(""); 
 #endif
+
+	#ifdef DELTA_PRINTER
+		SERIAL_ECHO_START;
+		SERIAL_ECHOLNPGM("M333 delta endtops offset");
+		SERIAL_ECHO_START;
+		SERIAL_ECHOPAIR("X:",delta_axis_offset[0]);
+		SERIAL_ECHOPAIR("Y:",delta_axis_offset[1]);
+		SERIAL_ECHOPAIR("Z:",delta_axis_offset[2]);
+		SERIAL_ECHOPAIR("DIAGONAL_ROD:",delta_diagonal_rod);
+		SERIAL_ECHOLN("");
+	#endif
 } 
 #endif
 
@@ -191,7 +206,10 @@ void Config_RetrieveSettings()
         EEPROM_READ_VAR(i,Kp);
         EEPROM_READ_VAR(i,Ki);
         EEPROM_READ_VAR(i,Kd);
-
+		#ifdef DELTA_PRINTER
+		EEPROM_READ_VAR(i,delta_axis_offset);
+		EEPROM_READ_VAR(i,delta_diagonal_rod);
+		#endif
         SERIAL_ECHO_START;
         SERIAL_ECHOLNPGM("Stored settings retreived:");
     }
@@ -242,3 +260,4 @@ void Config_ResetDefault()
 #endif//PID_ADD_EXTRUSION_RATE
 #endif//PIDTEMP
 }
+

@@ -810,6 +810,7 @@ void max_temp_error(uint8_t e) {
 }
 
 void min_temp_error(uint8_t e) {
+#ifndef TEST_EXTRUDER
   disable_heater();
   if(IsStopped() == false) {
     SERIAL_ERROR_START;
@@ -820,6 +821,7 @@ void min_temp_error(uint8_t e) {
   #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
   Stop();
   #endif
+#endif //TEST_EXTRUDER
 }
 
 void bed_max_temp_error(void) {
@@ -1112,3 +1114,4 @@ ISR(TIMER0_COMPB_vect)
 #endif
   }  
 }
+

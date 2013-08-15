@@ -50,7 +50,7 @@
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
 
 //Implemented Codes
-//-------------------
+//-------------------G
 // G0  -> G1
 // G1  - Coordinated Movement X Y Z E
 // G2  - CW ARC
@@ -130,10 +130,14 @@
 // M908 - Control digital trimpot directly.
 // M350 - Set microstepping mode.
 // M351 - Toggle MS1 MS2 pins directly.
-// M999 - Restart after being stopped by error
-
+// M999 - Restart after being sto2pped by error
+// M333 - 
 //Stepper Movement Variables
 
+#ifdef DELTA_PRINTER
+float delta_axis_offset[3] = {DELTA_ENDSTOP_OFFSET_X,DELTA_ENDSTOP_OFFSET_Y,DELTA_ENDSTOP_OFFSET_Z};
+float delta_diagonal_rod = DELTA_DIAGONAL_ROD;
+#endif
 //===========================================================================
 //=============================imported variables============================
 //===========================================================================
@@ -893,9 +897,14 @@ void process_commands()
         }
       }
       calculate_delta(current_position);
+	#ifdef DELTA_PRINTER
+      for(int8_t i=0; i < NUM_AXIS; i++) {
+        delta[i] += delta_axis_offset[i];
+      }
+	#endif
       plan_set_position(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS], current_position[E_AXIS]);
-      
-      #ifdef ENDSTOPS_ONLY_FOR_HOMING
+
+	  #ifdef ENDSTOPS_ONLY_FOR_HOMING
         enable_endstops(false);
       #endif
       
@@ -1433,6 +1442,15 @@ void process_commands()
         if(code_seen(axis_codes[i])) add_homeing[i] = code_value();
       }
       break;
+	#ifdef DELTA_PRINTER
+	case 333: // M333 
+	for(int8_t i=0; i < 4; i++)
+	  {
+		  if(code_seen(axis_codes[i])) delta_axis_offset[i] = code_value();
+		  if(code_seen('R'))delta_diagonal_rod = code_value();
+	  }
+	break;
+	#endif
     #ifdef FWRETRACT
     case 207: //M207 - set retract length S[positive mm] F[feedrate mm/sec] Z[additional zlift/hop]
     {
@@ -1789,6 +1807,19 @@ void get_arc_coordinates()
 
 void clamp_to_software_endstops(float target[3])
 {
+#ifdef DELTA_PRINT_DIAMETER
+	float d,r;
+	r = DELTA_PRINT_DIAMETER/2;
+	d = sqrt(sq(target[X_AXIS])+sq(target[Y_AXIS])+sq(target[Z_AXIS]));
+	if( d > r )
+	{ //简单的剪切到圆形打印区里面
+		target[X_AXIS]=r*target[X_AXIS]/d;
+		target[Y_AXIS]=r*target[Y_AXIS]/d;
+	}
+	//应该说打印区的Z方向的边缘是有限制的。不是一个圆柱体。这里暂不做处理
+	if (target[Z_AXIS] < min_pos[Z_AXIS]) target[Z_AXIS] = min_pos[Z_AXIS];
+	if (target[Z_AXIS] > max_pos[Z_AXIS]) target[Z_AXIS] = max_pos[Z_AXIS];
+#else
   if (min_software_endstops) {
     if (target[X_AXIS] < min_pos[X_AXIS]) target[X_AXIS] = min_pos[X_AXIS];
     if (target[Y_AXIS] < min_pos[Y_AXIS]) target[Y_AXIS] = min_pos[Y_AXIS];
@@ -1800,19 +1831,20 @@ void clamp_to_software_endstops(float target[3])
     if (target[Y_AXIS] > max_pos[Y_AXIS]) target[Y_AXIS] = max_pos[Y_AXIS];
     if (target[Z_AXIS] > max_pos[Z_AXIS]) target[Z_AXIS] = max_pos[Z_AXIS];
   }
+#endif
 }
 
 void calculate_delta(float cartesian[3])
 {
-  delta[X_AXIS] = sqrt(sq(DELTA_DIAGONAL_ROD)
+  delta[X_AXIS] = sqrt(sq(delta_diagonal_rod)
                        - sq(DELTA_TOWER1_X-cartesian[X_AXIS])
                        - sq(DELTA_TOWER1_Y-cartesian[Y_AXIS])
                        ) + cartesian[Z_AXIS];
-  delta[Y_AXIS] = sqrt(sq(DELTA_DIAGONAL_ROD)
+  delta[Y_AXIS] = sqrt(sq(delta_diagonal_rod)
                        - sq(DELTA_TOWER2_X-cartesian[X_AXIS])
                        - sq(DELTA_TOWER2_Y-cartesian[Y_AXIS])
                        ) + cartesian[Z_AXIS];
-  delta[Z_AXIS] = sqrt(sq(DELTA_DIAGONAL_ROD)
+  delta[Z_AXIS] = sqrt(sq(delta_diagonal_rod)
                        - sq(DELTA_TOWER3_X-cartesian[X_AXIS])
                        - sq(DELTA_TOWER3_Y-cartesian[Y_AXIS])
                        ) + cartesian[Z_AXIS];
@@ -2137,3 +2169,4 @@ bool setTargetedHotend(int code){
   }
   return false;
 }
+

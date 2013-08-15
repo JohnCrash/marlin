@@ -78,7 +78,10 @@ void plan_set_e_position(const float &e);
 
 void check_axes_activity();
 uint8_t movesplanned(); //return the nr of buffered moves
-
+#ifdef DELTA_PRINTER
+extern float delta_axis_offset[3];
+extern float delta_diagonal_rod;
+#endif
 extern unsigned long minsegmenttime;
 extern float max_feedrate[4]; // set the max speeds
 extern float axis_steps_per_unit[4];
@@ -137,3 +140,4 @@ FORCE_INLINE bool blocks_queued()
 
 void allow_cold_extrudes(bool allow);
 #endif
+
