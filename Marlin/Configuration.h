@@ -74,6 +74,7 @@
 	#define AUTO_CALIBRATION
 	#ifdef AUTO_CALIBRATION
 		#define CALIBRATION_STOP_PIN X_MIN_PIN
+		const bool CALIBRATION_ENDSTOPS_INVERTING = true; 
 	#endif
 #endif
 // Make delta curves from many straight lines (linear interpolation).

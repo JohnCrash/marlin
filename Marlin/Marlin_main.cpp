@@ -131,7 +131,8 @@
 // M350 - Set microstepping mode.
 // M351 - Toggle MS1 MS2 pins directly.
 // M999 - Restart after being sto2pped by error
-// M333 - 
+// M333 - set delta_axis_offset and delta_diagonal_rod by manual
+// M329 - automatic set delta_axis_offset and delta_diagonal_rod
 //Stepper Movement Variables
 
 #ifdef DELTA_PRINTER
@@ -752,6 +753,20 @@ void calibrate_print_surface(float z_offset) {
     SERIAL_ECHOLN("");
   }
 }
+
+//三角打印机自动校准打印平面
+#ifdef DELTA_PRINTER
+//解一个线性方程
+bool eq3x3(float n[3][3],float c[3],float x[4])
+{
+	//
+}
+
+void auto_calibration_print_surface()
+{
+	//首先设置初始值
+}
+#endif
 
 void process_commands()
 {
@@ -1443,12 +1458,15 @@ void process_commands()
       }
       break;
 	#ifdef DELTA_PRINTER
-	case 333: // M333 
+	case 333: // M333 手动设置打印平面
 	for(int8_t i=0; i < 4; i++)
 	  {
 		  if(code_seen(axis_codes[i])) delta_axis_offset[i] = code_value();
 		  if(code_seen('R'))delta_diagonal_rod = code_value();
 	  }
+	break;
+	case 329: // M329 自动设置打印平面
+	auto_calibration_print_surface();
 	break;
 	#endif
     #ifdef FWRETRACT
