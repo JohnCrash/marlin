@@ -757,14 +757,187 @@ void calibrate_print_surface(float z_offset) {
 //三角打印机自动校准打印平面
 #ifdef DELTA_PRINTER
 //解一个线性方程
-bool eq3x3(float n[3][3],float c[3],float x[4])
+//已知三点求平面方程
+void panel3point(float p1[3],float p2[3],float p3[3],float panel[4])
 {
-	//
+    panel[0] = (p2[1]-p1[1])*(p3[2]-p1[2])-(p2[2]-p1[2])*(p3[1]-p1[1]);
+    panel[1] = (p2[2]-p1[2])*(p3[0]-p1[0])-(p2[0]-p1[0])*(p3[2]-p1[2]);
+    panel[2] = (p2[0]-p1[0])*(p3[1]-p1[1])-(p2[1]-p1[1])*(p3[0]-p1[0]);
+    panel[3] = -(panel[0]*p1[0]+panel[1]*p1[1]+panel[2]*p1[2]);
+}
+//初始化打印机
+void g28()
+{//下面代码从G28命令复制而来
+    feedmultiply = 100;
+    previous_millis_cmd = millis();	
+
+	enable_endstops(true);
+
+    for(int8_t i=0; i < NUM_AXIS; i++) {
+       destination[i] = current_position[i];
+    }
+    feedrate = 0.0;
+	//快速抬起直到三角顶端
+	current_position[X_AXIS] = 0;
+	current_position[Y_AXIS] = 0;
+	current_position[Z_AXIS] = 0;
+	plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]); 
+
+	destination[X_AXIS] = 3 * Z_MAX_LENGTH;
+	destination[Y_AXIS] = 3 * Z_MAX_LENGTH;
+	destination[Z_AXIS] = 3 * Z_MAX_LENGTH;
+	feedrate = 1.732 * homing_feedrate[X_AXIS];
+	plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
+	st_synchronize();
+	endstops_hit_on_purpose();
+
+	current_position[X_AXIS] = destination[X_AXIS];
+	current_position[Y_AXIS] = destination[Y_AXIS];
+	current_position[Z_AXIS] = destination[Z_AXIS];
+	//再次回弹X,Y,Z
+	HOMEAXIS(X);
+	HOMEAXIS(Y);
+	HOMEAXIS(Z);
+	//设置三角起始位置
+	calculate_delta(current_position);
+    plan_set_position(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS], current_position[E_AXIS]);
+
+	enable_endstops(false);
+	previous_millis_cmd = millis();
+	endstops_hit_on_purpose();
+}
+//抬起
+void shift_up()
+{
+	previous_millis_cmd = millis();
+	destination[X_AXIS] = current_position[X_AXIS];
+	destination[Y_AXIS] = current_position[Y_AXIS];
+	destination[Z_AXIS] = current_position[Z_AXIS]+20;
+	calculate_delta(destination);
+	plan_buffer_line(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],
+                   destination[E_AXIS], feedrate*feedmultiply/60/100.0,
+                   active_extruder);
+	st_synchronize();
+	current_position[Z_AXIS] += 20;	
+}
+//平移到指定位置不改变z
+void move_to(float x,float y)
+{
+	previous_millis_cmd = millis();
+	destination[X_AXIS] = x;
+	destination[Y_AXIS] = y;
+	destination[Z_AXIS] = current_position[Z_AXIS];
+	calculate_delta(destination);
+	plan_buffer_line(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],
+                   destination[E_AXIS], feedrate*feedmultiply/60/100.0,
+                   active_extruder);
+	st_synchronize();
+	current_position[X_AXIS] = x;
+	current_position[Y_AXIS] = y;
+}
+//下移测量并且返回z,跟随move_to才能正确执行
+float measure_z(float x,float y)
+{
+	long value;
+	
+	destination[X_AXIS] = x;
+	destination[Y_AXIS] = y;
+	destination[Z_AXIS] = -Z_MAX_LENGTH;
+	previous_millis_cmd = millis();
+  	calculate_delta(destination);
+	value = st_get_position(X_AXIS);
+	plan_buffer_line(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],
+                   destination[E_AXIS], feedrate*feedmultiply/60/100.0,
+                   active_extruder);
+	st_synchronize();
+	//这里因为碰撞其实不可能到达指定的位置
+	//而实际的位置需要重新设置
+	for(int i=0;i<3;++i)
+		position[i]=st_get_position(i);
+	//考虑到在移动前已经位于x,y位置,因此不用设置current_position的x,y
+	//测量操作仅仅是移动z
+	//根据planner.cpp中的plan_buffer_line函数
+	//增加direction_bits=0,减小direction_bits|=1
+	//减小 bits|=1 count_direction=-1
+	//增加 bits=0 count_direction=1
+	//因为是向下移动,因此在测试的时候direction_bits始终为-1
+	current_position[Z_AXIS] += (st_get_position(X_AXIS)-value)/axis_steps_per_unit[X_AXIS];
+	return current_position[Z_AXIS];	
+}
+//取得4个校准点,分别是中心点,x,y,z
+void get_calibration_point(float o[3],float p1[3],float p2[3],float p3[3])
+{
+	saved_feedrate = feedrate;
+    saved_feedmultiply = feedmultiply;
+    feedmultiply = 100;
+    previous_millis_cmd = millis();	
+
+	enable_endstops(true);
+	
+	o[0] = 0;
+	o[1] = 0;
+	p1[0] = -CALIBRATION_RADIUS*cos(M_PI/6);
+	p1[1] = -CALIBRATION_RADIUS*sin(M_PI/6);
+	p2[0] = CALIBRATION_RADIUS*cos(M_PI/6);
+	p2[1] = -CALIBRATION_RADIUS*sin(M_PI/6);
+	p3[0] = 0;
+	p3[1] = CALIBRATION_RADIUS;
+	//需要通过一系列的动作来的出z值
+	//首先执行一个类似G28的动作来初始化打印机位置
+	g28();
+	//然后从中心点下移一直触碰到打印平面为止。这样得到o[2]	
+	o[2] = measure_z(o[0],o[1]);
+	shift_up();
+	move_to(p1[0],p1[1]);
+	p1[2] = measure_z(p1[0],p1[1]);
+	shift_up();
+	move_to(p2[0],p2[1]);
+	p2[2] = measure_z(p2[0],p2[1]);
+	shift_up();
+	move_to(p3[0],p3[1]);
+	p3[2] = measure_z(p3[0],p3[1]);
+
+	//抬起移动到中心
+	shift_up();
+	move_to(0,0);
+
+	enable_endstops(false);
+
+	feedrate = saved_feedrate;
+	feedmultiply = saved_feedmultiply;
+	previous_millis_cmd = millis();
+	endstops_hit_on_purpose();	
+}
+
+//已知平面方程和x,y求z
+float plane_z(float p[4],float x,float y)
+{
+	return -(p[0]*x+p[1]*y+p[3])/p[2];
 }
 
 void auto_calibration_print_surface()
 {
 	//首先设置初始值
+	float o[3],p1[3],p2[3],p3[3],panel[4];
+	float minz = 0;
+
+	get_calibration_point(o,p1,p2,p3);
+	panel3point(p1,p2,p3,panel);
+
+	//计算出修正值
+//	plane_z(panel,0,0);
+	delta_axis_offset[0] = plane_z(panel,DELTA_TOWER1_X,DELTA_TOWER1_Y);
+	delta_axis_offset[1] = plane_z(panel,DELTA_TOWER2_X,DELTA_TOWER2_Y);
+	delta_axis_offset[2] = plane_z(panel,DELTA_TOWER3_X,DELTA_TOWER3_Y);
+
+	minz = min(delta_axis_offset[0],
+			min(delta_axis_offset[1],delta_axis_offset[2]));
+	if(minz < 0 )
+	{
+		delta_axis_offset[0] -= minz;
+		delta_axis_offset[1] -= minz;
+		delta_axis_offset[2] -= minz;
+	}
 }
 #endif
 
