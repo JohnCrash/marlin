@@ -79,6 +79,10 @@ void Config_StoreSettings()
 	#ifdef DELTA_PRINTER
 		EEPROM_WRITE_VAR(i,delta_axis_offset);
 		EEPROM_WRITE_VAR(i,delta_diagonal_rod);
+		EEPROM_WRITE_VAR(i,prob_offset_z);
+		for(int m=0;m<7;m++)
+			for(int n=0;n<7;n++)
+				EEPROM_WRITE_VAR(i,bed_level[m][n]);
 	#endif
   char ver2[4]=EEPROM_VERSION;
   i=EEPROM_OFFSET;
@@ -161,7 +165,18 @@ void Config_PrintSettings()
 		SERIAL_ECHOPAIR("Y:",delta_axis_offset[1]);
 		SERIAL_ECHOPAIR("Z:",delta_axis_offset[2]);
 		SERIAL_ECHOPAIR("DIAGONAL_ROD:",delta_diagonal_rod);
+		SERIAL_ECHOPAIR("prob_offset_z:",prob_offset_z);
 		SERIAL_ECHOLN("");
+		SERIAL_ECHOLNPGM("bed_level[7][7]=\n");
+		for (int y = 3; y >= -3; y--) 
+		{
+			for (int x = -3; x <= 3; x++) 
+			{
+				SERIAL_PROTOCOL_F(bed_level[x+3][y+3], 3);
+				SERIAL_PROTOCOLPGM(" ");
+			}
+			SERIAL_ECHOLN("");
+		}
 	#endif
 } 
 #endif
@@ -209,6 +224,10 @@ void Config_RetrieveSettings()
 		#ifdef DELTA_PRINTER
 		EEPROM_READ_VAR(i,delta_axis_offset);
 		EEPROM_READ_VAR(i,delta_diagonal_rod);
+		EEPROM_READ_VAR(i,prob_offset_z);
+		for(int m=0;m<7;m++)
+			for(int n=0;n<7;n++)
+				EEPROM_READ_VAR(i,bed_level[m][n]);		
 		#endif
         SERIAL_ECHO_START;
         SERIAL_ECHOLNPGM("Stored settings retreived:");

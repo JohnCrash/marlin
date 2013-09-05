@@ -138,6 +138,7 @@
 #ifdef DELTA_PRINTER
 float delta_axis_offset[3] = {DELTA_ENDSTOP_OFFSET_X,DELTA_ENDSTOP_OFFSET_Y,DELTA_ENDSTOP_OFFSET_Z};
 float delta_diagonal_rod = DELTA_DIAGONAL_ROD;
+float prob_offset_z = 6.55;
 #endif
 //===========================================================================
 //=============================imported variables============================
@@ -177,7 +178,8 @@ const char axis_codes[NUM_AXIS] = {'X', 'Y', 'Z', 'E'};
 static float destination[NUM_AXIS] = {  0.0, 0.0, 0.0, 0.0};
 static float delta[3] = {0.0, 0.0, 0.0};
 static float offset[3] = {0.0, 0.0, 0.0};
-static float bed_level[7][7] = {
+
+float bed_level[7][7] = {
   {0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0},
@@ -186,6 +188,7 @@ static float bed_level[7][7] = {
   {0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0},
 };
+
 static bool home_all_axis = true;
 static float feedrate = 1500.0, next_feedrate, saved_feedrate;
 static long gcode_N, gcode_LastN, Stopped_gcode_LastN = 0;
@@ -674,6 +677,13 @@ void deploy_z_probe() {
 }
 
 void retract_z_probe() {
+	feedrate = 400*60;
+	destination[X_AXIS] = 0;
+	destination[Y_AXIS] = 0;
+	destination[Z_AXIS] = 30;
+	prepare_move_raw();
+	st_synchronize();
+/*
   feedrate = 400*60;
   destination[X_AXIS] = -40;
   destination[Y_AXIS] = -82;
@@ -691,6 +701,7 @@ void retract_z_probe() {
   destination[Z_AXIS] = current_position[Z_AXIS] + 0.1;
   prepare_move_raw();
   st_synchronize();
+  */
 }
 
 float z_probe() {
@@ -768,6 +779,13 @@ void panel3point(float p1[3],float p2[3],float p3[3],float panel[4])
 //初始化打印机
 void g28()
 {//下面代码从G28命令复制而来
+	float temp[3];
+	//不使用偏移
+	for(int8_t i=0;i < 3;i++)
+	{
+		temp[i] = add_homeing[i];
+		add_homeing[i]=0;
+	}
     feedmultiply = 100;
     previous_millis_cmd = millis();	
 
@@ -800,52 +818,67 @@ void g28()
 	HOMEAXIS(Z);
 	//设置三角起始位置
 	calculate_delta(current_position);
+      
+	  for(int8_t i=0; i < NUM_AXIS; i++) {
+        delta[i] += delta_axis_offset[i];
+      }	
+	
     plan_set_position(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS], current_position[E_AXIS]);
 
 	enable_endstops(false);
 	previous_millis_cmd = millis();
 	endstops_hit_on_purpose();
+	for(int8_t i=0;i < 3;i++)
+	{
+		add_homeing[i] = temp[i];
+	}	
 }
 //抬起
 void shift_up()
 {
-	previous_millis_cmd = millis();
+	enable_endstops(false);
 	destination[X_AXIS] = current_position[X_AXIS];
 	destination[Y_AXIS] = current_position[Y_AXIS];
-	destination[Z_AXIS] = current_position[Z_AXIS]+20;
-	calculate_delta(destination);
-	plan_buffer_line(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],
-                   destination[E_AXIS], feedrate*feedmultiply/60/100.0,
-                   active_extruder);
+	destination[Z_AXIS] = current_position[Z_AXIS]+30;
+	feedrate = 2 * homing_feedrate[X_AXIS];
+	prepare_move_raw();
 	st_synchronize();
-	current_position[Z_AXIS] += 20;	
 }
 //平移到指定位置不改变z
 void move_to(float x,float y)
 {
-	previous_millis_cmd = millis();
+	enable_endstops(false);
 	destination[X_AXIS] = x;
 	destination[Y_AXIS] = y;
 	destination[Z_AXIS] = current_position[Z_AXIS];
-	calculate_delta(destination);
-	plan_buffer_line(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],
-                   destination[E_AXIS], feedrate*feedmultiply/60/100.0,
-                   active_extruder);
+	feedrate = 2 * homing_feedrate[X_AXIS];
+	prepare_move_raw();
 	st_synchronize();
-	current_position[X_AXIS] = x;
-	current_position[Y_AXIS] = y;
 }
 //下移测量并且返回z,跟随move_to才能正确执行
 float measure_z(float x,float y)
 {
 	long value;
-	
+
+	enable_endstops(true);	
 	destination[X_AXIS] = x;
 	destination[Y_AXIS] = y;
 	destination[Z_AXIS] = -Z_MAX_LENGTH;
 	previous_millis_cmd = millis();
-  	calculate_delta(destination);
+	
+	SERIAL_ECHO_START;
+	SERIAL_ECHOPGM("\n measure_z(x:");
+	SERIAL_ECHO(x);
+	SERIAL_ECHOPGM("y:");
+	SERIAL_ECHO(y);
+	SERIAL_ECHOPGM("z:");
+	SERIAL_ECHO(destination[Z_AXIS]);
+	SERIAL_ECHOPGM(")\n");
+	
+  	calculate_delta(destination);	
 	value = st_get_position(X_AXIS);
+
+	feedrate = 1 * homing_feedrate[X_AXIS];
 	plan_buffer_line(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],
                    destination[E_AXIS], feedrate*feedmultiply/60/100.0,
                    active_extruder);
@@ -862,6 +895,12 @@ float measure_z(float x,float y)
 	//增加 bits=0 count_direction=1
 	//因为是向下移动,因此在测试的时候direction_bits始终为-1
 	current_position[Z_AXIS] += (st_get_position(X_AXIS)-value)/axis_steps_per_unit[X_AXIS];
+	
+	enable_endstops(false);
+	
+		SERIAL_ECHO_START;
+		SERIAL_ECHOPGM("\n return:");
+		SERIAL_ECHO(current_position[Z_AXIS]);
 	return current_position[Z_AXIS];	
 }
 //取得4个校准点,分别是中心点,x,y,z
@@ -872,8 +911,6 @@ void get_calibration_point(float o[3],float p1[3],float p2[3],float p3[3])
     feedmultiply = 100;
     previous_millis_cmd = millis();	
 
-	enable_endstops(true);
-	
 	o[0] = 0;
 	o[1] = 0;
 	p1[0] = -CALIBRATION_RADIUS*cos(M_PI/6);
@@ -919,25 +956,38 @@ void auto_calibration_print_surface()
 {
 	//首先设置初始值
 	float o[3],p1[3],p2[3],p3[3],panel[4];
-	float minz = 0;
+	float maxz = 0;
 
 	get_calibration_point(o,p1,p2,p3);
 	panel3point(p1,p2,p3,panel);
 
 	//计算出修正值
 //	plane_z(panel,0,0);
-	delta_axis_offset[0] = plane_z(panel,DELTA_TOWER1_X,DELTA_TOWER1_Y);
-	delta_axis_offset[1] = plane_z(panel,DELTA_TOWER2_X,DELTA_TOWER2_Y);
-	delta_axis_offset[2] = plane_z(panel,DELTA_TOWER3_X,DELTA_TOWER3_Y);
+	p1[0] = plane_z(panel,DELTA_TOWER1_X,DELTA_TOWER1_Y);
+	p1[1] = plane_z(panel,DELTA_TOWER2_X,DELTA_TOWER2_Y);
+	p1[2] = plane_z(panel,DELTA_TOWER3_X,DELTA_TOWER3_Y);
 
-	minz = min(delta_axis_offset[0],
-			min(delta_axis_offset[1],delta_axis_offset[2]));
-	if(minz < 0 )
-	{
-		delta_axis_offset[0] -= minz;
-		delta_axis_offset[1] -= minz;
-		delta_axis_offset[2] -= minz;
-	}
+	add_homeing[Z_AXIS]=prob_offset_z-p1[2];
+		
+	maxz = max(p1[0],max(p1[1],p1[2]));
+
+	delta_axis_offset[0] += maxz-p1[0];
+	delta_axis_offset[1] += maxz-p1[1];
+	delta_axis_offset[2] += maxz-p1[2];
+	
+	maxz = min(delta_axis_offset[0],min(delta_axis_offset[1],delta_axis_offset[2]));
+	
+	delta_axis_offset[0] -= maxz;
+	delta_axis_offset[1] -= maxz;
+	delta_axis_offset[2] -= maxz;
+	
+	SERIAL_ECHO_START;
+	SERIAL_ECHOPGM("\n offset x:");
+	SERIAL_ECHO(delta_axis_offset[0]);
+	SERIAL_ECHOPGM("\n offset y:");
+	SERIAL_ECHO(delta_axis_offset[1]);
+	SERIAL_ECHOPGM("\n offset z:");
+	SERIAL_ECHO(delta_axis_offset[2]);	
 }
 #endif
 
