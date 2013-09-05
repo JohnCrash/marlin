@@ -67,7 +67,6 @@ volatile long endstops_stepsTotal,endstops_stepsDone;
 static volatile bool endstop_x_hit=false;
 static volatile bool endstop_y_hit=false;
 static volatile bool endstop_z_hit=false;
-static volatile bool calibration_stop_hit=false;
 
 static bool old_x_min_endstop=false;
 static bool old_x_max_endstop=false;
@@ -75,7 +74,6 @@ static bool old_y_min_endstop=false;
 static bool old_y_max_endstop=false;
 static bool old_z_min_endstop=false;
 static bool old_z_max_endstop=false;
-static bool old_calibration_stop=false;
 
 static bool check_endstops = true;
 
@@ -166,7 +164,7 @@ asm volatile ( \
 
 void checkHitEndstops()
 {
- if( endstop_x_hit || endstop_y_hit || endstop_z_hit || calibration_stop_hit ) {
+ if( endstop_x_hit || endstop_y_hit || endstop_z_hit ) {
    SERIAL_ECHO_START;
    SERIAL_ECHOPGM(MSG_ENDSTOPS_HIT);
    if(endstop_x_hit) {
@@ -182,7 +180,6 @@ void checkHitEndstops()
    endstop_x_hit=false;
    endstop_y_hit=false;
    endstop_z_hit=false;
-   calibration_stop_hit = false;
  }
 }
 
@@ -191,7 +188,6 @@ void endstops_hit_on_purpose()
   endstop_x_hit=false;
   endstop_y_hit=false;
   endstop_z_hit=false;
-  calibration_stop_hit = false;
 }
 
 void enable_endstops(bool check)
@@ -328,22 +324,6 @@ ISR(TIMER1_COMPA_vect)
     // Set directions TO DO This should be done once during init of trapezoid. Endstops -> interrupt
     out_bits = current_block->direction_bits;
 
-	//检测校准endstop开关是不是被触碰
-	CHECK_ENDSTOPS
-	{
-		#if CALIBRATION_STOP_PIN > -1
-		bool calibration_stop =(READ(CALIBRATION_STOP_PIN)!=CALIBRATION_ENDSTOPS_INVERTING);
-		if(calibration_stop && old_calibration_stop)
-		{
-			endstops_trigsteps[X_AXIS] = count_position[X_AXIS];
-			endstops_trigsteps[Y_AXIS] = count_position[Y_AXIS];
-			endstops_trigsteps[Z_AXIS] = count_position[Z_AXIS];
-			calibration_stop_hit = true;
-			step_events_completed = current_block->step_event_count;
-		}
-		old_calibration_stop = calibration_stop;
-		#endif
-	}
     // Set direction en check limit switches
     if ((out_bits & (1<<X_AXIS)) != 0) {   // stepping along -X axis
       #if !defined COREXY  //NOT COREXY

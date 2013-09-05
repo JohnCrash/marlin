@@ -79,7 +79,7 @@ void Config_StoreSettings()
 	#ifdef DELTA_PRINTER
 		EEPROM_WRITE_VAR(i,delta_axis_offset);
 		EEPROM_WRITE_VAR(i,delta_diagonal_rod);
-		EEPROM_WRITE_VAR(i,prob_offset_z);
+		EEPROM_WRITE_VAR(i,z_probe_offset);
 		for(int m=0;m<7;m++)
 			for(int n=0;n<7;n++)
 				EEPROM_WRITE_VAR(i,bed_level[m][n]);
@@ -165,7 +165,11 @@ void Config_PrintSettings()
 		SERIAL_ECHOPAIR("Y:",delta_axis_offset[1]);
 		SERIAL_ECHOPAIR("Z:",delta_axis_offset[2]);
 		SERIAL_ECHOPAIR("DIAGONAL_ROD:",delta_diagonal_rod);
-		SERIAL_ECHOPAIR("prob_offset_z:",prob_offset_z);
+		SERIAL_ECHOLN("");
+		SERIAL_ECHOLNPGM("z_probe_offset");
+		SERIAL_ECHOPAIR("X:",z_probe_offset[0]);
+		SERIAL_ECHOPAIR("Y:",z_probe_offset[1]);
+		SERIAL_ECHOPAIR("Z:",z_probe_offset[2]);
 		SERIAL_ECHOLN("");
 		SERIAL_ECHOLNPGM("bed_level[7][7]=\n");
 		for (int y = 3; y >= -3; y--) 
@@ -224,7 +228,7 @@ void Config_RetrieveSettings()
 		#ifdef DELTA_PRINTER
 		EEPROM_READ_VAR(i,delta_axis_offset);
 		EEPROM_READ_VAR(i,delta_diagonal_rod);
-		EEPROM_READ_VAR(i,prob_offset_z);
+		EEPROM_READ_VAR(i,z_probe_offset);
 		for(int m=0;m<7;m++)
 			for(int n=0;n<7;n++)
 				EEPROM_READ_VAR(i,bed_level[m][n]);		
@@ -262,6 +266,16 @@ void Config_ResetDefault()
     max_z_jerk=DEFAULT_ZJERK;
     max_e_jerk=DEFAULT_EJERK;
     add_homeing[0] = add_homeing[1] = add_homeing[2] = 0;
+#ifdef DELTA_PRINTER
+	delta_axis_offset[0] = delta_axis_offset[1] = delta_axis_offset[2] = 0;
+	delta_diagonal_rod = DELTA_DIAGONAL_ROD;
+	float temp[] = Z_PROBE_OFFSET;
+	for(int k=0;k<4;k++)
+		z_probe_offset[k] = temp[k];
+	for(int m=0;m<7;m++)
+		for(int n=0;n<7;n++)
+			bed_level[m][n] = 0;	
+#endif
 #ifdef ULTIPANEL
     plaPreheatHotendTemp = PLA_PREHEAT_HOTEND_TEMP;
     plaPreheatHPBTemp = PLA_PREHEAT_HPB_TEMP;

@@ -138,8 +138,8 @@
 #ifdef DELTA_PRINTER
 float delta_axis_offset[3] = {DELTA_ENDSTOP_OFFSET_X,DELTA_ENDSTOP_OFFSET_Y,DELTA_ENDSTOP_OFFSET_Z};
 float delta_diagonal_rod = DELTA_DIAGONAL_ROD;
-float prob_offset_z = 6.55;
 #endif
+float z_probe_offset[4] = Z_PROBE_OFFSET;
 //===========================================================================
 //=============================imported variables============================
 //===========================================================================
@@ -152,7 +152,6 @@ float prob_offset_z = 6.55;
 CardReader card;
 #endif
 float homing_feedrate[] = HOMING_FEEDRATE;
-float z_probe_offset[] = Z_PROBE_OFFSET;
 bool axis_relative_modes[] = AXIS_RELATIVE_MODES;
 int feedmultiply=100; //100->1 200->2
 int saved_feedmultiply;
@@ -740,9 +739,9 @@ void calibrate_print_surface(float z_offset) {
     int dir = y % 2 ? -1 : 1;
     for (int x = -3*dir; x != 4*dir; x += dir) {
       if (x*x + y*y < 11) {
-	destination[X_AXIS] = 25 * x + z_probe_offset[X_AXIS];
-	destination[Y_AXIS] = 25 * y + z_probe_offset[Y_AXIS];
-	bed_level[x+3][y+3] = z_probe() + z_offset;
+		destination[X_AXIS] = 25 * x - z_probe_offset[X_AXIS];
+		destination[Y_AXIS] = 25 * y - z_probe_offset[Y_AXIS];
+		bed_level[x+3][y+3] = z_probe() + z_offset;
       } else {
         bed_level[x+3][y+3] = 0.0;
       }
@@ -834,12 +833,12 @@ void g28()
 	}	
 }
 //抬起
-void shift_up()
+void shift_up(float z)
 {
 	enable_endstops(false);
 	destination[X_AXIS] = current_position[X_AXIS];
 	destination[Y_AXIS] = current_position[Y_AXIS];
-	destination[Z_AXIS] = current_position[Z_AXIS]+30;
+	destination[Z_AXIS] = current_position[Z_AXIS]+z;
 	feedrate = 2 * homing_feedrate[X_AXIS];
 	prepare_move_raw();
 	st_synchronize();
@@ -847,6 +846,8 @@ void shift_up()
 //平移到指定位置不改变z
 void move_to(float x,float y)
 {
+	x -= z_probe_offset[X_AXIS];
+	y -= z_probe_offset[Y_AXIS];
 	enable_endstops(false);
 	destination[X_AXIS] = x;
 	destination[Y_AXIS] = y;
@@ -860,6 +861,8 @@ float measure_z(float x,float y)
 {
 	long value;
 
+	x -= z_probe_offset[X_AXIS];
+	y -= z_probe_offset[Y_AXIS];
 	enable_endstops(true);	
 	destination[X_AXIS] = x;
 	destination[Y_AXIS] = y;
@@ -878,7 +881,7 @@ float measure_z(float x,float y)
   	calculate_delta(destination);	
 	value = st_get_position(X_AXIS);
 
-	feedrate = 1 * homing_feedrate[X_AXIS];
+	feedrate = 2 * homing_feedrate[X_AXIS];
 	plan_buffer_line(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],
                    destination[E_AXIS], feedrate*feedmultiply/60/100.0,
                    active_extruder);
@@ -922,20 +925,22 @@ void get_calibration_point(float o[3],float p1[3],float p2[3],float p3[3])
 	//需要通过一系列的动作来的出z值
 	//首先执行一个类似G28的动作来初始化打印机位置
 	g28();
+	shift_up(-100);
+	move_to(0,0);
 	//然后从中心点下移一直触碰到打印平面为止。这样得到o[2]	
 	o[2] = measure_z(o[0],o[1]);
-	shift_up();
+	shift_up(30);
 	move_to(p1[0],p1[1]);
 	p1[2] = measure_z(p1[0],p1[1]);
-	shift_up();
+	shift_up(30);
 	move_to(p2[0],p2[1]);
 	p2[2] = measure_z(p2[0],p2[1]);
-	shift_up();
+	shift_up(30);
 	move_to(p3[0],p3[1]);
 	p3[2] = measure_z(p3[0],p3[1]);
 
 	//抬起移动到中心
-	shift_up();
+	shift_up(30);
 	move_to(0,0);
 
 	enable_endstops(false);
@@ -955,31 +960,51 @@ float plane_z(float p[4],float x,float y)
 void auto_calibration_print_surface()
 {
 	//首先设置初始值
-	float o[3],p1[3],p2[3],p3[3],panel[4];
+	float o[3],p1[3],p2[3],p3[3],panel[4],panel2[4];
+	float v[3];
 	float maxz = 0;
 
 	get_calibration_point(o,p1,p2,p3);
 	panel3point(p1,p2,p3,panel);
 
-	//计算出修正值
-//	plane_z(panel,0,0);
-	p1[0] = plane_z(panel,DELTA_TOWER1_X,DELTA_TOWER1_Y);
-	p1[1] = plane_z(panel,DELTA_TOWER2_X,DELTA_TOWER2_Y);
-	p1[2] = plane_z(panel,DELTA_TOWER3_X,DELTA_TOWER3_Y);
-
-	add_homeing[Z_AXIS]=prob_offset_z-p1[2];
+	v[0] = plane_z(panel,DELTA_TOWER1_X,DELTA_TOWER1_Y);
+	v[1] = plane_z(panel,DELTA_TOWER2_X,DELTA_TOWER2_Y);
+	v[2] = plane_z(panel,DELTA_TOWER3_X,DELTA_TOWER3_Y);
+	
+	add_homeing[Z_AXIS]=-z_probe_offset[Z_AXIS]-plane_z(panel,0,0);
 		
 	maxz = max(p1[0],max(p1[1],p1[2]));
 
-	delta_axis_offset[0] += maxz-p1[0];
-	delta_axis_offset[1] += maxz-p1[1];
-	delta_axis_offset[2] += maxz-p1[2];
+	p1[0]=DELTA_TOWER1_X;
+	p1[1]=DELTA_TOWER1_Y;
+	p1[2]=delta_axis_offset[0];
+	p2[0]=DELTA_TOWER2_X;
+	p2[1]=DELTA_TOWER2_Y;
+	p2[2]=delta_axis_offset[1];
+	p3[0]=DELTA_TOWER3_X;
+	p3[1]=DELTA_TOWER3_Y;
+	p3[2]=delta_axis_offset[2];
+	panel3point(p1,p2,p3,panel);
+	
+	delta_axis_offset[0] += maxz-v[0];
+	delta_axis_offset[1] += maxz-v[1];
+	delta_axis_offset[2] += maxz-v[2];
 	
 	maxz = min(delta_axis_offset[0],min(delta_axis_offset[1],delta_axis_offset[2]));
 	
 	delta_axis_offset[0] -= maxz;
 	delta_axis_offset[1] -= maxz;
 	delta_axis_offset[2] -= maxz;
+
+	p1[2]=delta_axis_offset[0];
+	p2[2]=delta_axis_offset[1];
+	p3[2]=delta_axis_offset[2];
+	panel3point(p1,p2,p3,panel2);
+	
+	/*  修改delta_axis_offset将导致起始平面发生变化
+		因此需要将该两个起始平面的差值对add_homeing进行修正
+	*/
+	add_homeing[Z_AXIS] -= (plane_z(panel2,0,0)-plane_z(panel,0,0));
 	
 	SERIAL_ECHO_START;
 	SERIAL_ECHOPGM("\n offset x:");
@@ -988,6 +1013,9 @@ void auto_calibration_print_surface()
 	SERIAL_ECHO(delta_axis_offset[1]);
 	SERIAL_ECHOPGM("\n offset z:");
 	SERIAL_ECHO(delta_axis_offset[2]);	
+	SERIAL_ECHOPGM("\n add_homeing Z:");
+	SERIAL_ECHO(add_homeing[Z_AXIS]);	
+	SERIAL_ECHOPGM("\n");
 }
 #endif
 
@@ -1681,12 +1709,18 @@ void process_commands()
       }
       break;
 	#ifdef DELTA_PRINTER
-	case 333: // M333 手动设置打印平面
-	for(int8_t i=0; i < 4; i++)
-	  {
-		  if(code_seen(axis_codes[i])) delta_axis_offset[i] = code_value();
-		  if(code_seen('R'))delta_diagonal_rod = code_value();
-	  }
+		case 333: // M333 手动设置打印平面
+		for(int8_t i=0; i < 4; i++)
+		{
+			if(code_seen(axis_codes[i])) delta_axis_offset[i] = code_value();
+			if(code_seen('R'))delta_diagonal_rod = code_value();
+		}
+	break;
+	case 334: //M334 设置打印平面校准传感器偏移
+		for(int8_t i=0; i < 4; i++)
+		{
+			if(code_seen(axis_codes[i])) z_probe_offset[i] = code_value();
+		}	
 	break;
 	case 329: // M329 自动设置打印平面
 	auto_calibration_print_surface();

@@ -184,9 +184,9 @@ void setPwmFrequency(uint8_t pin, int val);
 extern float delta_axis_offset[3];
 extern float delta_diagonal_rod;
 extern float bed_level[7][7];
-extern float prob_offset_z;
 #endif
 
+extern float z_probe_offset[4];
 extern float homing_feedrate[];
 extern bool axis_relative_modes[];
 extern int feedmultiply;

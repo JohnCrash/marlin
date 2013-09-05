@@ -71,12 +71,7 @@
 	读CALIBRATION_STOP_PIN。使用三个靠近X,Y,Z的点来修正打印平面。
 	这些点是(-77.94,-45),(77.94,-45),(0,90)它们组成一个正三角形。
 */
-	#define AUTO_CALIBRATION
-	#ifdef AUTO_CALIBRATION
-		#define CALIBRATION_STOP_PIN X_MIN_PIN
-		const bool CALIBRATION_ENDSTOPS_INVERTING = true; 
-		#define CALIBRATION_RADIUS 90
-	#endif
+#define CALIBRATION_RADIUS 90
 #endif
 // Make delta curves from many straight lines (linear interpolation).
 // This is a trade-off between visible corners (not enough segments)
@@ -328,7 +323,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, Z, E
 #define HOMING_FEEDRATE {200*60, 200*60, 200*60, 0}  // set the homing speeds (mm/min)
 
-#define Z_PROBE_OFFSET {0, -13.6, -6.4, 0}  // Distance between hotend nozzle and deployed bed leveling probe.
+#define Z_PROBE_OFFSET {-13, -6, -6.5, 0}  // Distance between hotend nozzle and deployed bed leveling probe.
 
 // default settings 
 
