@@ -65,7 +65,7 @@
 /*
 	三角打印机比较理想是使用圆形区间。下面给出打印机绘制直径。
 */
-#define DELTA_PRINT_DIAMETER 300
+#define DELTA_PRINT_DIAMETER 280
 /*
 	自动校准打印平面，需要在移动架上加一个开关。当移动到底部碰到底板的地方，
 	读CALIBRATION_STOP_PIN。使用三个靠近X,Y,Z的点来修正打印平面。
