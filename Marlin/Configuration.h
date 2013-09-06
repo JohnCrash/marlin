@@ -72,6 +72,7 @@
 	这些点是(-77.94,-45),(77.94,-45),(0,90)它们组成一个正三角形。
 */
 #define CALIBRATION_RADIUS 90
+#define ADJUST_GRID 30
 #endif
 // Make delta curves from many straight lines (linear interpolation).
 // This is a trade-off between visible corners (not enough segments)

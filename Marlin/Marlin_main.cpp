@@ -729,7 +729,7 @@ float z_probe() {
 		    current_position[E_AXIS]);
 
   feedrate = 400*60;
-  destination[Z_AXIS] = mm+2;
+  destination[Z_AXIS] = mm+10;
   prepare_move_raw();
   return mm;
 }
@@ -739,8 +739,8 @@ void calibrate_print_surface(float z_offset) {
     int dir = y % 2 ? -1 : 1;
     for (int x = -3*dir; x != 4*dir; x += dir) {
       if (x*x + y*y < 11) {
-		destination[X_AXIS] = 25 * x - z_probe_offset[X_AXIS];
-		destination[Y_AXIS] = 25 * y - z_probe_offset[Y_AXIS];
+		destination[X_AXIS] = ADJUST_GRID * x - z_probe_offset[X_AXIS];
+		destination[Y_AXIS] = ADJUST_GRID * y - z_probe_offset[Y_AXIS];
 		bed_level[x+3][y+3] = z_probe() + z_offset;
       } else {
         bed_level[x+3][y+3] = 0.0;
@@ -869,15 +869,6 @@ float measure_z(float x,float y)
 	destination[Z_AXIS] = -Z_MAX_LENGTH;
 	previous_millis_cmd = millis();
 	
-	SERIAL_ECHO_START;
-	SERIAL_ECHOPGM("\n measure_z(x:");
-	SERIAL_ECHO(x);
-	SERIAL_ECHOPGM("y:");
-	SERIAL_ECHO(y);
-	SERIAL_ECHOPGM("z:");
-	SERIAL_ECHO(destination[Z_AXIS]);
-	SERIAL_ECHOPGM(")\n");
-	
   	calculate_delta(destination);	
 	value = st_get_position(X_AXIS);
 
@@ -901,9 +892,13 @@ float measure_z(float x,float y)
 	
 	enable_endstops(false);
 	
-		SERIAL_ECHO_START;
-		SERIAL_ECHOPGM("\n return:");
-		SERIAL_ECHO(current_position[Z_AXIS]);
+	SERIAL_ECHO_START;
+	SERIAL_ECHOPGM("\n measure_z(");
+	SERIAL_ECHO(x+z_probe_offset[X_AXIS]);
+	SERIAL_ECHOPGM(",");
+	SERIAL_ECHO(y+z_probe_offset[Y_AXIS]);
+	SERIAL_ECHOPGM(")=");
+	SERIAL_ECHO(current_position[Z_AXIS]);
 	return current_position[Z_AXIS];	
 }
 //取得4个校准点,分别是中心点,x,y,z
@@ -960,52 +955,47 @@ float plane_z(float p[4],float x,float y)
 void auto_calibration_print_surface()
 {
 	//首先设置初始值
-	float o[3],p1[3],p2[3],p3[3],panel[4],panel2[4];
+	float o[3],p1[3],p2[3],p3[3],panel[4];
 	float v[3];
-	float maxz = 0;
+	float maxv = 0;
 
 	get_calibration_point(o,p1,p2,p3);
 	panel3point(p1,p2,p3,panel);
 
-	v[0] = plane_z(panel,DELTA_TOWER1_X,DELTA_TOWER1_Y);
-	v[1] = plane_z(panel,DELTA_TOWER2_X,DELTA_TOWER2_Y);
-	v[2] = plane_z(panel,DELTA_TOWER3_X,DELTA_TOWER3_Y);
+	p1[0] = DELTA_TOWER1_X;
+	p1[1] = DELTA_TOWER1_Y;
+	p2[0] = DELTA_TOWER2_X;
+	p2[1] = DELTA_TOWER2_Y;
+	p3[0] = DELTA_TOWER3_X;
+	p3[1] = DELTA_TOWER3_Y;
+	
+	v[0] = plane_z(panel,p1[0],p1[1]);
+	v[1] = plane_z(panel,p2[0],p2[1]);
+	v[2] = plane_z(panel,p3[0],p3[1]);
 	
 	add_homeing[Z_AXIS]=-z_probe_offset[Z_AXIS]-plane_z(panel,0,0);
 		
-	maxz = max(p1[0],max(p1[1],p1[2]));
-
-	p1[0]=DELTA_TOWER1_X;
-	p1[1]=DELTA_TOWER1_Y;
-	p1[2]=delta_axis_offset[0];
-	p2[0]=DELTA_TOWER2_X;
-	p2[1]=DELTA_TOWER2_Y;
-	p2[2]=delta_axis_offset[1];
-	p3[0]=DELTA_TOWER3_X;
-	p3[1]=DELTA_TOWER3_Y;
-	p3[2]=delta_axis_offset[2];
-	panel3point(p1,p2,p3,panel);
+	maxv = max(v[0],max(v[1],v[2]));
 	
-	delta_axis_offset[0] += maxz-v[0];
-	delta_axis_offset[1] += maxz-v[1];
-	delta_axis_offset[2] += maxz-v[2];
-	
-	maxz = min(delta_axis_offset[0],min(delta_axis_offset[1],delta_axis_offset[2]));
-	
-	delta_axis_offset[0] -= maxz;
-	delta_axis_offset[1] -= maxz;
-	delta_axis_offset[2] -= maxz;
-
-	p1[2]=delta_axis_offset[0];
-	p2[2]=delta_axis_offset[1];
-	p3[2]=delta_axis_offset[2];
-	panel3point(p1,p2,p3,panel2);
+	delta_axis_offset[0] += maxv-v[0];
+	delta_axis_offset[1] += maxv-v[1];
+	delta_axis_offset[2] += maxv-v[2];
+	maxv = min(delta_axis_offset[0],min(delta_axis_offset[1],delta_axis_offset[2]));
+	delta_axis_offset[0] -= maxv;
+	delta_axis_offset[1] -= maxv;
+	delta_axis_offset[2] -= maxv;
 	
 	/*  修改delta_axis_offset将导致起始平面发生变化
 		因此需要将该两个起始平面的差值对add_homeing进行修正
 	*/
-	add_homeing[Z_AXIS] -= (plane_z(panel2,0,0)-plane_z(panel,0,0));
+/*
+	p1[2]=delta_axis_offset[0];
+	p2[2]=delta_axis_offset[1];
+	p3[2]=delta_axis_offset[2];
+	panel3point(p1,p2,p3,panel);
 	
+	add_homeing[Z_AXIS] -= plane_z(panel,0,0);
+	*/
 	SERIAL_ECHO_START;
 	SERIAL_ECHOPGM("\n offset x:");
 	SERIAL_ECHO(delta_axis_offset[0]);
@@ -2137,8 +2127,8 @@ void calculate_delta(float cartesian[3])
 // Adjust print surface height by linear interpolation over the bed_level array.
 void adjust_delta(float cartesian[3])
 {
-  float grid_x = max(-2.999, min(2.999, cartesian[X_AXIS]/25.0));
-  float grid_y = max(-2.999, min(2.999, cartesian[Y_AXIS]/25.0));
+  float grid_x = max(-2.999, min(2.999, cartesian[X_AXIS]/ADJUST_GRID));
+  float grid_y = max(-2.999, min(2.999, cartesian[Y_AXIS]/ADJUST_GRID));
   int floor_x = floor(grid_x);
   int floor_y = floor(grid_y);
   float ratio_x = grid_x - floor_x;
