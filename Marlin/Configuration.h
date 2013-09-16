@@ -72,7 +72,7 @@
 	这些点是(-77.94,-45),(77.94,-45),(0,90)它们组成一个正三角形。
 */
 #define CALIBRATION_RADIUS 90
-#define ADJUST_GRID 30
+#define ADJUST_GRID 40
 #endif
 // Make delta curves from many straight lines (linear interpolation).
 // This is a trade-off between visible corners (not enough segments)
@@ -324,7 +324,8 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, Z, E
 #define HOMING_FEEDRATE {200*60, 200*60, 200*60, 0}  // set the homing speeds (mm/min)
 
-#define Z_PROBE_OFFSET {-13, -6, -6.5, 0}  // Distance between hotend nozzle and deployed bed leveling probe.
+//#define Z_PROBE_OFFSET {-13, -6, -6.5, 0}  // Distance between hotend nozzle and deployed bed leveling probe.
+#define Z_PROBE_OFFSET {0, 0, -6.5, 0}  // Distance between hotend nozzle and deployed bed leveling probe.
 
 // default settings 
 
@@ -357,7 +358,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 
 //LCD and SD support
 //#define ULTRA_LCD  //general lcd support, also 16x2
-//#define SDSUPPORT // Enable SD Card Support in Hardware Console
+#define SDSUPPORT // Enable SD Card Support in Hardware Console
 
 //#define ULTIMAKERCONTROLLER //as available from the ultimaker online store.
 //#define ULTIPANEL  //the ultipanel as on thingiverse
