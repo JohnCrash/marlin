@@ -47,7 +47,7 @@
 // 301 = Rambo
 
 #ifndef MOTHERBOARD
-#define MOTHERBOARD 72
+#define MOTHERBOARD 33
 #endif
 
 //===========================================================================
@@ -65,14 +65,14 @@
 /*
 	三角打印机比较理想是使用圆形区间。下面给出打印机绘制直径。
 */
-#define DELTA_PRINT_DIAMETER 280
+#define DELTA_PRINT_DIAMETER 180
 /*
 	自动校准打印平面，需要在移动架上加一个开关。当移动到底部碰到底板的地方，
 	读CALIBRATION_STOP_PIN。使用三个靠近X,Y,Z的点来修正打印平面。
 	这些点是(-77.94,-45),(77.94,-45),(0,90)它们组成一个正三角形。
 */
-#define CALIBRATION_RADIUS 90
-#define ADJUST_GRID 40
+#define CALIBRATION_RADIUS 80
+#define ADJUST_GRID 25
 #endif
 // Make delta curves from many straight lines (linear interpolation).
 // This is a trade-off between visible corners (not enough segments)
@@ -80,16 +80,16 @@
 #define DELTA_SEGMENTS_PER_SECOND 100
 
 // Center-to-center distance of the holes in the diagonal push rods.
-#define DELTA_DIAGONAL_ROD 369.0 // mm
+#define DELTA_DIAGONAL_ROD 244.0 // mm
 
 // Horizontal offset from middle of printer to smooth rod center.
-#define DELTA_SMOOTH_ROD_OFFSET 231.0 // mm
+#define DELTA_SMOOTH_ROD_OFFSET 132 // mm
 
 // Horizontal offset of the universal joints on the end effector.
-#define DELTA_EFFECTOR_OFFSET 15.5 // mm
+#define DELTA_EFFECTOR_OFFSET 0 // mm
 
 // Horizontal offset of the universal joints on the carriages.
-#define DELTA_CARRIAGE_OFFSET 25 // mm
+#define DELTA_CARRIAGE_OFFSET 20 // mm
 
 // Effective horizontal distance bridged by diagonal push rods.
 #define DELTA_RADIUS (DELTA_SMOOTH_ROD_OFFSET-DELTA_EFFECTOR_OFFSET-DELTA_CARRIAGE_OFFSET)
@@ -253,7 +253,7 @@
   #define ENDSTOPPULLUP_ZMAX
   #define ENDSTOPPULLUP_XMIN
   #define ENDSTOPPULLUP_YMIN
-  //#define ENDSTOPPULLUP_ZMIN
+  #define ENDSTOPPULLUP_ZMIN
 #endif
 
 #ifdef ENDSTOPPULLUPS
@@ -318,18 +318,18 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 // For deltabots this means top and center of the cartesian print volume.
 #define MANUAL_X_HOME_POS 0
 #define MANUAL_Y_HOME_POS 0
-#define MANUAL_Z_HOME_POS 410  // Distance between nozzle and print surface after homing.
+#define MANUAL_Z_HOME_POS 270  // Distance between nozzle and print surface after homing.
 
 //// MOVEMENT SETTINGS
 #define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, Z, E
 #define HOMING_FEEDRATE {200*60, 200*60, 200*60, 0}  // set the homing speeds (mm/min)
 
 //#define Z_PROBE_OFFSET {-13, -6, -6.5, 0}  // Distance between hotend nozzle and deployed bed leveling probe.
-#define Z_PROBE_OFFSET {0, 0, -6.5, 0}  // Distance between hotend nozzle and deployed bed leveling probe.
+#define Z_PROBE_OFFSET {0, 0, -21.8, 0}  // Distance between hotend nozzle and deployed bed leveling probe.
 
 // default settings 
 
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {52.4934, 52.4934, 52.4934,101.86}
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {94.117647, 94.117647, 94.117647,361.39073}
 #define DEFAULT_MAX_FEEDRATE          {320, 320, 320, 20}  // (mm/sec)
 #define DEFAULT_MAX_ACCELERATION      {2000, 2000, 2000, 200}    // X, Y, Z, E maximum start speed for accelerated moves.
 
@@ -386,7 +386,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 
 #ifdef ULTIPANEL
 //  #define NEWPANEL  //enable this if you have a click-encoder panel
-  #define SDSUPPORT
+//  #define SDSUPPORT
   #define ULTRA_LCD
   #define LCD_WIDTH 20
   #define LCD_HEIGHT 4

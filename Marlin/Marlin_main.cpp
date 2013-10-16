@@ -848,7 +848,7 @@ void shift_up(float z)
 	destination[X_AXIS] = current_position[X_AXIS];
 	destination[Y_AXIS] = current_position[Y_AXIS];
 	destination[Z_AXIS] = current_position[Z_AXIS]+z;
-	feedrate = 2 * homing_feedrate[X_AXIS];
+	feedrate = homing_feedrate[X_AXIS];
 	prepare_move_raw();
 	st_synchronize();
 }
@@ -859,7 +859,7 @@ void move_to(float x,float y)
 	destination[X_AXIS] = x;
 	destination[Y_AXIS] = y;
 	destination[Z_AXIS] = current_position[Z_AXIS];
-	feedrate = 2 * homing_feedrate[X_AXIS];
+	feedrate = homing_feedrate[X_AXIS];
 	prepare_move_raw();
 	st_synchronize();
 }
@@ -931,7 +931,7 @@ void get_calibration_point(float o[3],float p1[3],float p2[3],float p3[3])
 	//需要通过一系列的动作来的出z值
 	//首先执行一个类似G28的动作来初始化打印机位置
 	g28();
-	shift_up(-300);
+	shift_up(-200);
 
 	//然后从中心点下移一直触碰到打印平面为止。这样得到o[2]	
 	o[2] = measure_z(o[0],o[1]);
@@ -1461,7 +1461,8 @@ void process_commands()
             codenum = millis();
           }
           manage_heater();
-          manage_inactivity();
+		 // 如果等待温度过久，这将导致disable stepper
+         // manage_inactivity();
           lcd_update();
         #ifdef TEMP_RESIDENCY_TIME
             /* start/restart the TEMP_RESIDENCY_TIME timer whenever we reach target temp for the first time
@@ -2149,7 +2150,7 @@ void adjust(bool b)
 // Adjust print surface height by linear interpolation over the bed_level array.
 void adjust_delta(float cartesian[3])
 {
-	adjust(true);
+//	adjust(true);
   float grid_x = max(-2.999, min(2.999, cartesian[X_AXIS]/ADJUST_GRID));
   float grid_y = max(-2.999, min(2.999, cartesian[Y_AXIS]/ADJUST_GRID));
   int floor_x = floor(grid_x);
@@ -2163,7 +2164,7 @@ void adjust_delta(float cartesian[3])
   float left = (1-ratio_y)*z1 + ratio_y*z2;
   float right = (1-ratio_y)*z3 + ratio_y*z4;
   float offset = (1-ratio_x)*left + ratio_x*right;
-	adjust(false);
+//	adjust(false);
   delta[X_AXIS] += offset;
   delta[Y_AXIS] += offset;
   delta[Z_AXIS] += offset;
