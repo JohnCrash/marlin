@@ -65,13 +65,13 @@
 /*
 	三角打印机比较理想是使用圆形区间。下面给出打印机绘制直径。
 */
-#define DELTA_PRINT_DIAMETER 180
+#define DELTA_PRINT_DIAMETER 160
 /*
 	自动校准打印平面，需要在移动架上加一个开关。当移动到底部碰到底板的地方，
 	读CALIBRATION_STOP_PIN。使用三个靠近X,Y,Z的点来修正打印平面。
 	这些点是(-77.94,-45),(77.94,-45),(0,90)它们组成一个正三角形。
 */
-#define CALIBRATION_RADIUS 80
+#define CALIBRATION_RADIUS 60
 #define ADJUST_GRID 25
 #endif
 // Make delta curves from many straight lines (linear interpolation).

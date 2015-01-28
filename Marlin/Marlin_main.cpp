@@ -177,6 +177,7 @@ const char axis_codes[NUM_AXIS] = {'X', 'Y', 'Z', 'E'};
 static float destination[NUM_AXIS] = {  0.0, 0.0, 0.0, 0.0};
 static float delta[3] = {0.0, 0.0, 0.0};
 static float offset[3] = {0.0, 0.0, 0.0};
+/*
 static float bed_level_adjust[7][7] = {
 	{0.2,0.2,0,0.2,0.2,0.2,0.2},
 	{0.2,0,0,0.2,0,0,0},
@@ -186,6 +187,7 @@ static float bed_level_adjust[7][7] = {
 	{-0.2,-0.4,-0.2,-0.2,-0.2,0,0.6},
 	{0,0,-0.2,-0.3,-0.2,-0.2,-0.2}
 };
+*/
 
 float bed_level[7][7] = {
   {0, 0, 0, 0, 0, 0, 0},
@@ -2134,6 +2136,7 @@ void calculate_delta(float cartesian[3])
   SERIAL_ECHOPGM(" z="); SERIAL_ECHOLN(delta[Z_AXIS]);
   */
 }
+/*
 void adjust(bool b)
 {
 	for(int8_t i=0;i<7;i++)
@@ -2147,6 +2150,7 @@ void adjust(bool b)
 		}
 	}
 }
+*/
 // Adjust print surface height by linear interpolation over the bed_level array.
 void adjust_delta(float cartesian[3])
 {
