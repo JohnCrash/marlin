@@ -98,6 +98,7 @@
 //        or use S<seconds> to specify an inactivity timeout, after which the steppers will be disabled.  S0 to disable the timeout.
 // M85  - Set inactivity shutdown timer with parameter S<seconds>. To disable set zero (default)
 // M92  - Set axis_steps_per_unit - same syntax as G92
+// M112 - Emergency stop
 // M114 - Output current position to serial port 
 // M115	- Capabilities string
 // M117 - display message
@@ -530,6 +531,11 @@ void get_command()
           }
 
         }
+		
+        //If command was e-stop process now
+        if(strcmp(cmdbuffer[bufindw], "M112") == 0)
+          kill();		
+		
         bufindw = (bufindw + 1)%BUFSIZE;
         buflen += 1;
       }
@@ -1372,6 +1378,9 @@ void process_commands()
       if (code_seen('S')) setTargetHotend(code_value(), tmp_extruder);
       setWatch();
       break;
+	case 112: //  M112 -Emergency Stop
+      kill();
+	  break;
     case 140: // M140 set bed temp
       if (code_seen('S')) setTargetBed(code_value());
       break;
