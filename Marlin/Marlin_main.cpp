@@ -2344,6 +2344,12 @@ void manage_inactivity()
   check_axes_activity();
 }
 
+//重启arduino
+void reset_arduino()
+{
+	asm volatile("jmp 0");
+}
+
 void kill()
 {
   cli(); // Stop interrupts
@@ -2361,7 +2367,9 @@ void kill()
   SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
   LCD_ALERTMESSAGEPGM(MSG_KILLED);
   suicide();
-  while(1) { /* Intentionally left empty */ } // Wait for reset
+  
+  reset_arduino();
+  //while(1) { /* Intentionally left empty */ } // Wait for reset
 }
 
 void Stop()
