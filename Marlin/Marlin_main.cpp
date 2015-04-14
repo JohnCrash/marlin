@@ -477,6 +477,9 @@ void get_command()
               SERIAL_ERROR_START;
               SERIAL_ERRORPGM(MSG_ERR_CHECKSUM_MISMATCH);
               SERIAL_ERRORLN(gcode_LastN);
+			  SERIAL_ERRORLN(cmdbuffer[bufindw]);
+			  SERIAL_ERRORLN(checksum);
+			  SERIAL_ERRORLN((int)(strtod(&cmdbuffer[bufindw][strchr_pointer - cmdbuffer[bufindw] + 1], NULL)));
               FlushSerialRequestResend();
               serial_count = 0;
               return;
@@ -678,9 +681,10 @@ static void homeaxis(int axis) {
   }
 }
 #define HOMEAXIS(LETTER) homeaxis(LETTER##_AXIS)
+#define FEEDRATE 8000
 
 void deploy_z_probe() {
-  feedrate = 400*60;
+  feedrate = FEEDRATE;//400*60;
   destination[X_AXIS] = 25;
   destination[Y_AXIS] = 93;
   destination[Z_AXIS] = 100;
@@ -693,7 +697,7 @@ void deploy_z_probe() {
 }
 
 void retract_z_probe() {
-	feedrate = 400*60;
+	feedrate = FEEDRATE;//400*60;
 	destination[X_AXIS] = 0;
 	destination[Y_AXIS] = 0;
 	destination[Z_AXIS] = 30;
@@ -721,7 +725,7 @@ void retract_z_probe() {
 }
 
 float z_probe() {
-  feedrate = 400*60;
+  feedrate = FEEDRATE;
   prepare_move_raw();
   st_synchronize();
 
@@ -745,7 +749,7 @@ float z_probe() {
   plan_set_position(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],
 		    current_position[E_AXIS]);
 
-  feedrate = 400*60;
+  feedrate = FEEDRATE;
   destination[Z_AXIS] = mm+10;
   prepare_move_raw();
   return mm;
@@ -1725,8 +1729,10 @@ void process_commands()
 		for(int8_t i=0; i < 4; i++)
 		{
 			if(code_seen(axis_codes[i])) delta_axis_offset[i] = code_value();
-			if(code_seen('R'))delta_diagonal_rod = code_value();
 		}
+		if(code_seen('R'))delta_diagonal_rod = code_value();
+		SERIAL_ECHOPAIR("delta_diagonal_rod=",delta_diagonal_rod);
+		SERIAL_PROTOCOLLN("");		
 	break;
 	case 334: //M334 设置打印平面校准传感器偏移
 		for(int8_t i=0; i < 4; i++)

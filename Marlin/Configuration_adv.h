@@ -71,7 +71,7 @@
 //===========================================================================
 
 // This defines the number of extruders
-#define EXTRUDERS 1
+#define EXTRUDERS 2
 
 #define ENDSTOPS_ONLY_FOR_HOMING // If defined the endstops will only be used for homing
 
@@ -256,7 +256,7 @@ const unsigned int dropsegments=5; //everything with less than this number of st
 
 //The ASCII buffer for recieving from the serial:
 #define MAX_CMD_SIZE 96
-#define BUFSIZE 4
+#define BUFSIZE 8
 
 
 // Firmware based and LCD controled retract

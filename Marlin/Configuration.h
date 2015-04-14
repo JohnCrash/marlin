@@ -18,8 +18,8 @@
 
 // This determines the communication speed of the printer
 //#define BAUDRATE 250000
+//#define BAUDRATE 115200
 #define BAUDRATE 115200
-
 //// The following define selects which electronics board you have. Please choose the one that matches your setup
 // 10 = Gen7 custom (Alfons3 Version) "https://github.com/Alfons3/Generation_7_Electronics"
 // 11 = Gen7 v1.1, v1.2 = 11
@@ -80,10 +80,15 @@
 #define DELTA_SEGMENTS_PER_SECOND 100
 
 // Center-to-center distance of the holes in the diagonal push rods.
-#define DELTA_DIAGONAL_ROD 244.0 // mm
+//#define DELTA_DIAGONAL_ROD 245.0 // mm
+#define DELTA_DIAGONAL_ROD 232.0 // mm
 
 // Horizontal offset from middle of printer to smooth rod center.
-#define DELTA_SMOOTH_ROD_OFFSET 132 // mm
+//老的值132,打印一个长度为142mm的物体，实际只有135mm
+//#define DELTA_SMOOTH_ROD_OFFSET 132 // mm
+//128时，142mm的物体，外边实际144,
+//增加DELTA_SMOOTH_ROD_OFFSET,将缩小实际打印成品尺寸。
+#define DELTA_SMOOTH_ROD_OFFSET 129.55555
 
 // Horizontal offset of the universal joints on the end effector.
 #define DELTA_EFFECTOR_OFFSET 0 // mm
@@ -129,8 +134,8 @@
 // 55 is 100k thermistor - ATC Semitec 104GT-2 (Used in ParCan) (1k pullup)
 
 #define TEMP_SENSOR_0 1
-#define TEMP_SENSOR_1 0
-#define TEMP_SENSOR_2 0
+#define TEMP_SENSOR_1 1
+#define TEMP_SENSOR_2 1
 #define TEMP_SENSOR_BED 1
 
 // Actual temperature must be close to target for this long before M109 returns success

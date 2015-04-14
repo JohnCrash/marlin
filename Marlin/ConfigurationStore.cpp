@@ -164,6 +164,7 @@ void Config_PrintSettings()
 		SERIAL_ECHOPAIR("X:",delta_axis_offset[0]);
 		SERIAL_ECHOPAIR("Y:",delta_axis_offset[1]);
 		SERIAL_ECHOPAIR("Z:",delta_axis_offset[2]);
+		SERIAL_ECHOLN("");
 		SERIAL_ECHOPAIR("DIAGONAL_ROD:",delta_diagonal_rod);
 		SERIAL_ECHOLN("");
 		SERIAL_ECHOLNPGM("z_probe_offset");
