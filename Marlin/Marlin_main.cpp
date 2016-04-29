@@ -686,7 +686,7 @@ static void homeaxis(int axis) {
 void deploy_z_probe() {
   feedrate = FEEDRATE;//400*60;
   destination[X_AXIS] = 25;
-  destination[Y_AXIS] = 93;
+  destination[Y_AXIS] = 80;
   destination[Z_AXIS] = 100;
   prepare_move_raw();
 
@@ -733,7 +733,7 @@ float z_probe() {
   float start_z = current_position[Z_AXIS];
   long start_steps = st_get_position(Z_AXIS);
 
-  feedrate = 50*60;
+  feedrate = 1000;//50*60;
   destination[Z_AXIS] = -100;
   prepare_move_raw();
   st_synchronize();
@@ -745,10 +745,11 @@ float z_probe() {
   float mm = start_z -
     float(start_steps - stop_steps) / axis_steps_per_unit[Z_AXIS];
   current_position[Z_AXIS] = mm;
+  
   calculate_delta(current_position);
   plan_set_position(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],
 		    current_position[E_AXIS]);
-
+			
   feedrate = FEEDRATE;
   destination[Z_AXIS] = mm+10;
   prepare_move_raw();
@@ -756,13 +757,18 @@ float z_probe() {
 }
 
 void calibrate_print_surface(float z_offset) {
+	/*
+	 * 不知道为什么每次z_probe都会有微小的蠕动，大概0.01mm
+	 */
+   float squirm_z = 0;
   for (int y = 3; y >= -3; y--) {
     int dir = y % 2 ? -1 : 1;
     for (int x = -3*dir; x != 4*dir; x += dir) {
       if (x*x + y*y < 11) {
 		destination[X_AXIS] = ADJUST_GRID * x - z_probe_offset[X_AXIS];
 		destination[Y_AXIS] = ADJUST_GRID * y - z_probe_offset[Y_AXIS];
-		bed_level[x+3][y+3] = z_probe() + z_offset;
+		bed_level[x+3][y+3] = z_probe() + z_offset + squirm_z;
+		squirm_z += 0.01;
       } else {
         bed_level[x+3][y+3] = 0.0;
       }
@@ -988,6 +994,11 @@ void auto_calibration_print_surface()
 	float v[3];
 	float maxv = 0;
 
+	for(int i=0;i<7;i++){
+		for(int j=0;j<7;j++){
+			bed_level[i][j] = 0;
+		}
+	}
 	get_calibration_point(o,p1,p2,p3);
 	panel3point(p1,p2,p3,panel);
 	

@@ -232,7 +232,7 @@ void Config_RetrieveSettings()
 		EEPROM_READ_VAR(i,z_probe_offset);
 		for(int m=0;m<7;m++)
 			for(int n=0;n<7;n++)
-				EEPROM_READ_VAR(i,bed_level[m][n]);		
+				EEPROM_READ_VAR(i,bed_level[m][n]);			
 		#endif
         SERIAL_ECHO_START;
         SERIAL_ECHOLNPGM("Stored settings retreived:");
