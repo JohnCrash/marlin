@@ -758,6 +758,7 @@ float z_probe() {
 
 void calibrate_print_surface(float z_offset) {
 	/*
+	 * FIXBUG:使用球形轴承的情况下
 	 * 不知道为什么每次z_probe都会有微小的蠕动，大概0.01mm
 	 */
    float squirm_z = 0;
@@ -768,7 +769,7 @@ void calibrate_print_surface(float z_offset) {
 		destination[X_AXIS] = ADJUST_GRID * x - z_probe_offset[X_AXIS];
 		destination[Y_AXIS] = ADJUST_GRID * y - z_probe_offset[Y_AXIS];
 		bed_level[x+3][y+3] = z_probe() + z_offset + squirm_z;
-		squirm_z += 0.01;
+		//squirm_z += 0.01;
       } else {
         bed_level[x+3][y+3] = 0.0;
       }

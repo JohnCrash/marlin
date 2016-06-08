@@ -81,14 +81,16 @@
 
 // Center-to-center distance of the holes in the diagonal push rods.
 //#define DELTA_DIAGONAL_ROD 245.0 // mm
-#define DELTA_DIAGONAL_ROD 232.0 // mm
+//#define DELTA_DIAGONAL_ROD 238.0 // mm 球头轴承的杆子长度
+#define DELTA_DIAGONAL_ROD 208.8 // mm 磁性球杆子长度
 
 // Horizontal offset from middle of printer to smooth rod center.
 //老的值132,打印一个长度为142mm的物体，实际只有135mm
 //#define DELTA_SMOOTH_ROD_OFFSET 132 // mm
 //128时，142mm的物体，外边实际144,
 //增加DELTA_SMOOTH_ROD_OFFSET,将缩小实际打印成品尺寸。
-#define DELTA_SMOOTH_ROD_OFFSET 129.55555
+//#define DELTA_SMOOTH_ROD_OFFSET 129.55555 //球头轴承的偏移
+#define DELTA_SMOOTH_ROD_OFFSET 127 //磁性球的偏移
 
 // Horizontal offset of the universal joints on the end effector.
 #define DELTA_EFFECTOR_OFFSET 0 // mm
@@ -334,7 +336,8 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 
 // default settings 
 
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {94.117647, 94.117647, 94.117647,361.39073}
+//#define DEFAULT_AXIS_STEPS_PER_UNIT   {94.117647, 94.117647, 94.117647,361.39073} //老的自己做的铜制挤出齿轮，直径大概15.1
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {94.117647, 94.117647, 94.117647,439.692056} //钢制12mm挤出齿轮
 #define DEFAULT_MAX_FEEDRATE          {320, 320, 320, 20}  // (mm/sec)
 #define DEFAULT_MAX_ACCELERATION      {2000, 2000, 2000, 200}    // X, Y, Z, E maximum start speed for accelerated moves.
 
