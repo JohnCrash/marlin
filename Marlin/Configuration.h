@@ -90,7 +90,7 @@
 //128时，142mm的物体，外边实际144,
 //增加DELTA_SMOOTH_ROD_OFFSET,将缩小实际打印成品尺寸。
 //#define DELTA_SMOOTH_ROD_OFFSET 129.55555 //球头轴承的偏移
-#define DELTA_SMOOTH_ROD_OFFSET 127 //磁性球的偏移
+#define DELTA_SMOOTH_ROD_OFFSET 127.8 //磁性球的偏移
 
 // Horizontal offset of the universal joints on the end effector.
 #define DELTA_EFFECTOR_OFFSET 0 // mm
