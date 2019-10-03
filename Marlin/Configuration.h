@@ -509,7 +509,7 @@
 // extra connectors. Leave undefined any used for non-endstop and non-probe purposes.
 //#define USE_XMIN_PLUG
 //#define USE_YMIN_PLUG
-//#define USE_ZMIN_PLUG
+#define USE_ZMIN_PLUG
 #define USE_XMAX_PLUG
 #define USE_YMAX_PLUG
 #define USE_ZMAX_PLUG
@@ -530,11 +530,11 @@
 // Mechanical endstop with COM to ground and NC to Signal uses "false" here (most common setup).
 #define X_MIN_ENDSTOP_INVERTING false // set to true to invert the logic of the endstop.
 #define Y_MIN_ENDSTOP_INVERTING false // set to true to invert the logic of the endstop.
-#define Z_MIN_ENDSTOP_INVERTING false // set to true to invert the logic of the endstop.
+#define Z_MIN_ENDSTOP_INVERTING true // set to true to invert the logic of the endstop.
 #define X_MAX_ENDSTOP_INVERTING true // set to true to invert the logic of the endstop.
 #define Y_MAX_ENDSTOP_INVERTING true // set to true to invert the logic of the endstop.
 #define Z_MAX_ENDSTOP_INVERTING true // set to true to invert the logic of the endstop.
-#define Z_MIN_PROBE_ENDSTOP_INVERTING false // set to true to invert the logic of the probe.
+#define Z_MIN_PROBE_ENDSTOP_INVERTING true // set to true to invert the logic of the probe.
 
 /**
  * Stepper Drivers
@@ -695,7 +695,7 @@
  * disastrous consequences. Use with caution and do your homework.
  *
  */
-#define Z_MIN_PROBE_ENDSTOP
+//#define Z_MIN_PROBE_ENDSTOP
 
 /**
  * Probe Type
@@ -716,7 +716,7 @@
  * A Fix-Mounted Probe either doesn't deploy or needs manual deployment.
  *   (e.g., an inductive probe or a nozzle-based probe-switch.)
  */
-//#define FIX_MOUNTED_PROBE
+#define FIX_MOUNTED_PROBE
 
 /**
  * Z Servo Probe, such as an endstop switch on a rotating arm.
@@ -971,7 +971,7 @@
  *   With an LCD controller the process is guided step-by-step.
  */
 //#define AUTO_BED_LEVELING_3POINT
-//#define AUTO_BED_LEVELING_LINEAR
+#define AUTO_BED_LEVELING_LINEAR
 //#define AUTO_BED_LEVELING_BILINEAR
 //#define AUTO_BED_LEVELING_UBL
 //#define MESH_BED_LEVELING
@@ -987,7 +987,7 @@
  * Turn on with the command 'M111 S32'.
  * NOTE: Requires a lot of PROGMEM!
  */
-//#define DEBUG_LEVELING_FEATURE
+#define DEBUG_LEVELING_FEATURE
 
 #if ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR) || ENABLED(AUTO_BED_LEVELING_UBL)
   // Gradually reduce leveling correction until a set height is reached,
@@ -1139,7 +1139,7 @@
 // - Move the Z probe (or nozzle) to a defined XY point before Z Homing when homing all axes (G28).
 // - Prevent Z homing when the Z probe is outside bed area.
 //
-//#define Z_SAFE_HOMING
+#define Z_SAFE_HOMING
 
 #if ENABLED(Z_SAFE_HOMING)
   #define Z_SAFE_HOMING_X_POINT ((X_BED_SIZE) / 2)    // X point for Z homing when homing all axes (G28).
